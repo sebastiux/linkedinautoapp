@@ -47,11 +47,29 @@ from modules.clickers_and_finders import *
 from modules.validator import validate_config
 
 if use_AI:
-    from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
-    from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
-    from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
-    from modules.ai.claudeConnections import claude_create_client, claude_extract_skills, claude_answer_question, claude_close_client
-    from modules.ai.grokConnections import grok_create_client, grok_extract_skills, grok_answer_question
+    # Import each provider independently so a missing optional package (e.g.
+    # google-generativeai for Gemini, anthropic for Claude) only disables that
+    # provider instead of crashing the whole bot.
+    try:
+        from modules.ai.openaiConnections import ai_create_openai_client, ai_extract_skills, ai_answer_question, ai_close_openai_client
+    except Exception as ai_import_error:
+        print(f"OpenAI provider unavailable: {ai_import_error}")
+    try:
+        from modules.ai.deepseekConnections import deepseek_create_client, deepseek_extract_skills, deepseek_answer_question
+    except Exception as ai_import_error:
+        print(f"DeepSeek provider unavailable: {ai_import_error}")
+    try:
+        from modules.ai.geminiConnections import gemini_create_client, gemini_extract_skills, gemini_answer_question
+    except Exception as ai_import_error:
+        print(f"Gemini provider unavailable (install google-generativeai to use it): {ai_import_error}")
+    try:
+        from modules.ai.claudeConnections import claude_create_client, claude_extract_skills, claude_answer_question, claude_close_client
+    except Exception as ai_import_error:
+        print(f"Claude provider unavailable (install anthropic to use it): {ai_import_error}")
+    try:
+        from modules.ai.grokConnections import grok_create_client, grok_extract_skills, grok_answer_question
+    except Exception as ai_import_error:
+        print(f"Grok provider unavailable: {ai_import_error}")
 
 from typing import Literal
 

@@ -34,6 +34,11 @@ def createChromeSession(isRetry: bool = False, version_main: int = None):
     options = uc.ChromeOptions() if stealth_mode else Options()
     if run_in_background:   options.add_argument("--headless")
     if disable_extensions:  options.add_argument("--disable-extensions")
+    # Skip Chrome's first-run screens and the "Who uses Chrome?" profile picker
+    # so the bot can drive the browser without a human clicking through them.
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--profile-directory=Default")
 
     print_lg("IF YOU HAVE MORE THAN 10 TABS OPENED, PLEASE CLOSE OR BOOKMARK THEM! Or it's highly likely that application will just open browser and not do anything!")
     profile_dir = find_default_profile_directory()

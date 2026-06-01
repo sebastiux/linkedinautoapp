@@ -59,9 +59,10 @@ def make_directories(paths: list[str]) -> None:
 
 def get_default_temp_profile() -> str:
     # Thanks to https://github.com/vinodbavage31 for suggestion!
+    # NOTE: Return ONLY the path here. The caller adds the "--user-data-dir=" prefix.
     home = pathlib.Path.home()
     if sys.platform.startswith('win'):
-        return "--user-data-dir=C:\\temp\\auto-job-apply-profile"
+        return "C:\\temp\\auto-job-apply-profile"
     elif sys.platform.startswith('linux'):
         return str(home / ".auto-job-apply-profile")
     return str(home / "Library" / "Application Support" / "Google" / "Chrome" / "auto-job-apply-profile")
