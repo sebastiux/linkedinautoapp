@@ -28,7 +28,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from modules.helpers import find_default_profile_directory, critical_error_log, print_lg
 from selenium.common.exceptions import SessionNotCreatedException
 
-def createChromeSession(isRetry: bool = False):
+def createChromeSession(isRetry: bool = False, version_main: int = None):
     make_directories([file_name,failed_file_name,logs_folder_path+"/screenshots",default_resume_path,generated_resume_path+"/temp"])
     # Set up WebDriver with Chrome Profile
     options = uc.ChromeOptions() if stealth_mode else Options()
@@ -45,24 +45,71 @@ def createChromeSession(isRetry: bool = False):
         print_lg("Logging in with a guest profile, Web history will not be saved!")
         options.add_argument(f"--user-data-dir={get_default_temp_profile()}")
     if stealth_mode:
-        # try: 
+        # try:
         #     driver = uc.Chrome(driver_executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe", options=options)
-        # except (FileNotFoundError, PermissionError) as e: 
-        #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__)) 
+        # except (FileNotFoundError, PermissionError) as e:
+        #     print_lg("(Undetected Mode) Got '{}' when using pre-installed ChromeDriver.".format(type(e).__name__))
             print_lg("Downloading Chrome Driver... This may take some time. Undetected mode requires download every run!")
-            driver = uc.Chrome(options=options)
+            if version_main:
+                print_lg(f"Matching ChromeDriver to your installed Chrome version: {version_main}")
+            driver = uc.Chrome(options=options, version_main=version_main)
     else: driver = webdriver.Chrome(options=options) #, service=Service(executable_path="C:\\Program Files\\Google\\Chrome\\chromedriver-win64\\chromedriver.exe"))
     driver.maximize_window()
     wait = WebDriverWait(driver, 5)
     actions = ActionChains(driver)
     return options, driver, actions, wait
 
+
+def _detect_installed_chrome_major(error_text: object) -> int | None:
+    '''
+    Tries to figure out the installed Chrome major version so we can download a
+    matching ChromeDriver. First it parses the version mentioned in a Selenium
+    error message (e.g. "Current browser version is 148.0.7778.179"); if that
+    fails it falls back to querying the system.
+    '''
+    import re
+    match = re.search(r"Current browser version is (\d+)", str(error_text))
+    if match:
+        return int(match.group(1))
+    try:
+        from undetected_chromedriver import find_chrome_executable
+        from undetected_chromedriver.patcher import Patcher  # noqa: F401
+        import subprocess, sys
+        chrome_path = find_chrome_executable()
+        if not chrome_path:
+            return None
+        if sys.platform.startswith("win"):
+            # Read the product version via PowerShell (no extra dependencies)
+            out = subprocess.check_output(
+                ["powershell", "-NoProfile", "-Command",
+                 f"(Get-Item '{chrome_path}').VersionInfo.ProductVersion"],
+                text=True, stderr=subprocess.DEVNULL,
+            ).strip()
+        else:
+            out = subprocess.check_output([chrome_path, "--version"], text=True).strip()
+        ver = re.search(r"(\d+)\.", out)
+        return int(ver.group(1)) if ver else None
+    except Exception:
+        return None
+
+
 try:
     options, driver, actions, wait = None, None, None, None
     options, driver, actions, wait = createChromeSession()
 except SessionNotCreatedException as e:
-    critical_error_log("Failed to create Chrome Session, retrying with guest profile", e)
-    options, driver, actions, wait = createChromeSession(True)
+    # Most common cause: the auto-downloaded ChromeDriver does not match the
+    # installed Chrome. Detect the installed Chrome version and retry with a
+    # matching driver before falling back to a guest profile.
+    chrome_major = _detect_installed_chrome_major(e)
+    try:
+        if chrome_major:
+            print_lg(f"ChromeDriver/Chrome version mismatch detected. Retrying with a driver for Chrome {chrome_major}...")
+            options, driver, actions, wait = createChromeSession(version_main=chrome_major)
+        else:
+            raise e
+    except SessionNotCreatedException as e2:
+        critical_error_log("Failed to create Chrome Session, retrying with guest profile", e2)
+        options, driver, actions, wait = createChromeSession(True, version_main=chrome_major)
 except Exception as e:
     msg = 'Seems like Google Chrome is out dated. Update browser and try again! \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set stealth_mode = False in config!"
