@@ -1212,7 +1212,19 @@ def main() -> None:
     try:
         global linkedIn_tab, tabs_count, useNewResume, aiClient
         alert_title = "Error Occurred. Closing Browser!"
-        validate_config()
+        # Validate config, but don't let a single bad field abort the whole run.
+        # Warn the user and let them choose to continue (e.g. to log in and test
+        # the flow) or stop and fix it.
+        try:
+            validate_config()
+        except Exception as ve:
+            print_lg(f"Configuration issue: {ve}")
+            choice = pyautogui.confirm(
+                f"A configuration value needs attention:\n\n{ve}\n\n"
+                "You can fix it later in the GUI. Continue the run anyway?",
+                "Configuration Warning", ["Continue anyway", "Stop and fix"])
+            if choice != "Continue anyway":
+                raise
         
         if not os.path.exists(default_resume_path):
             pyautogui.alert(text='Your default resume "{}" is missing! Please update it\'s folder path "default_resume_path" in config.py\n\nOR\n\nAdd a resume with exact name and path (check for spelling mistakes including cases).\n\n\nFor now the bot will continue using your previous upload from LinkedIn!'.format(default_resume_path), title="Missing Resume", button="OK")

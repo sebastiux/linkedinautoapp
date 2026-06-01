@@ -438,10 +438,12 @@ class ConfigApp(tk.Tk):
         self.status = ttk.Label(bar, text="Ready.", foreground="#444")
         self.status.pack(side="left")
 
-        self.run_btn = ttk.Button(bar, text="Save & Run Bot", command=self.save_and_run)
+        self.run_btn = ttk.Button(bar, text="2. Save & Run Bot", command=self.save_and_run)
         self.run_btn.pack(side="right", padx=4)
         self.stop_btn = ttk.Button(bar, text="Stop Bot", command=self.stop_bot, state="disabled")
         self.stop_btn.pack(side="right", padx=4)
+        self.login_btn = ttk.Button(bar, text="1. Login to LinkedIn", command=self.login_linkedin)
+        self.login_btn.pack(side="right", padx=4)
         ttk.Button(bar, text="Save All", command=self.save_all).pack(side="right", padx=4)
 
     def _build_log(self):
@@ -521,22 +523,14 @@ class ConfigApp(tk.Tk):
         return True
 
     # ----- run / stop ----- #
-    def save_and_run(self):
+    def _launch(self, script, started_msg, status_msg):
+        '''Launches a python script in a subprocess and streams its output.'''
         if self.proc and self.proc.poll() is None:
-            messagebox.showinfo("Already running", "The bot is already running.")
-            return
-        if not self.save_all():
-            return
-        if not messagebox.askyesno(
-                "Run bot",
-                "Launch runAiBot.py now?\n\nA Chrome window will open and start "
-                "applying. Keep an eye on it."):
-            return
-
-        script = os.path.join(HERE, "runAiBot.py")
+            messagebox.showinfo("Already running", "Something is already running. Stop it first.")
+            return False
         try:
             self.proc = subprocess.Popen(
-                [sys.executable, "-u", script],
+                [sys.executable, "-u", os.path.join(HERE, script)],
                 cwd=HERE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -544,14 +538,37 @@ class ConfigApp(tk.Tk):
                 bufsize=1,
             )
         except Exception as exc:
-            messagebox.showerror("Could not start bot", str(exc))
-            return
-
+            messagebox.showerror("Could not start", str(exc))
+            return False
         self.run_btn.config(state="disabled")
+        self.login_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
-        self.status.config(text="Bot running...")
-        self._log_write("\n=== Bot started ===\n")
+        self.status.config(text=status_msg)
+        self._log_write(f"\n=== {started_msg} ===\n")
         threading.Thread(target=self._reader_thread, args=(self.proc,), daemon=True).start()
+        return True
+
+    def login_linkedin(self):
+        if not self.save_all():
+            return
+        if not messagebox.askyesno(
+                "Manual LinkedIn login",
+                "Chrome will open on the LinkedIn login page.\n\n"
+                "Log in by hand (including any 2FA/captcha), then click "
+                "\"OK, I'm logged in\" in the small dialog.\n\n"
+                "Your session is saved, so the bot will already be logged in afterwards.\n\nOpen it now?"):
+            return
+        self._launch("manual_login.py", "Manual login started", "Waiting for you to log in...")
+
+    def save_and_run(self):
+        if not self.save_all():
+            return
+        if not messagebox.askyesno(
+                "Run bot",
+                "Launch runAiBot.py now?\n\nA Chrome window will open and start "
+                "applying. Keep an eye on it."):
+            return
+        self._launch("runAiBot.py", "Bot started", "Bot running...")
 
     def _reader_thread(self, proc):
         for line in iter(proc.stdout.readline, ""):
@@ -567,6 +584,7 @@ class ConfigApp(tk.Tk):
                 item = self.out_queue.get_nowait()
                 if isinstance(item, tuple) and item and item[0] == "__DONE__":
                     self.run_btn.config(state="normal")
+                    self.login_btn.config(state="normal")
                     self.stop_btn.config(state="disabled")
                     self.status.config(text="Bot finished.")
                 else:
