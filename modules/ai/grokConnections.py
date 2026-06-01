@@ -194,3 +194,22 @@ def grok_answer_question(
     except Exception as e:
         critical_error_log("Error occurred while answering question with Grok!", e)
         return {"error": str(e)}
+
+
+def grok_generate_resume(client: OpenAI, job_description: str, master_resume_latex: str) -> str | None:
+    '''
+    Asks Grok to tailor `master_resume_latex` to `job_description`.
+    Returns the tailored LaTeX source, or None on failure.
+    '''
+    try:
+        print_lg("Generating a tailored resume with Grok...")
+        prompt = resume_generation_prompt.format(master_resume_latex, job_description)
+        messages = [
+            {"role": "system", "content": "You are an expert resume writer and LaTeX engineer. Output ONLY valid LaTeX (no markdown fences, no commentary)."},
+            {"role": "user", "content": prompt},
+        ]
+        result = grok_completion(client, messages, temperature=0.2, stream=False)
+        return result if isinstance(result, str) else None
+    except Exception as e:
+        critical_error_log("Error generating tailored resume with Grok!", e)
+        return None

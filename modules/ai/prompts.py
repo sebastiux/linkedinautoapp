@@ -129,3 +129,26 @@ Respond concisely based on the type of question:
 {}
 """
 #<
+
+##> ------ Resume tailoring (LaTeX) ------
+# Use `resume_generation_prompt.format(master_resume_latex, job_description)`.
+resume_generation_prompt = """
+You are an expert technical resume writer and LaTeX engineer.
+
+Below is a MASTER RESUME written in LaTeX (a complete, compilable document) and a TARGET JOB DESCRIPTION.
+Produce a tailored version of the resume for that specific job, following these rules STRICTLY:
+
+1. Keep the EXACT same LaTeX preamble: do not change \\documentclass, \\usepackage lines, color definitions, \\newcommand definitions, geometry, or the header block. The document must still compile with XeLaTeX/LuaLaTeX.
+2. Reorder and rephrase the Executive Summary, the bullet points and the skills so the most relevant experience for THIS job appears first and uses the job's own keywords and terminology.
+3. You MAY lightly rewrite wording to mirror the job's language, but you MUST NOT invent experience, employers, job titles, dates, degrees, certifications or skills that are not already present in the master resume. Only reuse and re-emphasise what is already there.
+4. Keep roughly the same overall length so it still fits cleanly on the page(s).
+5. Escape any LaTeX special characters correctly.
+6. Output ONLY the complete LaTeX document, starting with \\documentclass and ending with \\end{{document}}. No explanations, no comments, no markdown code fences.
+
+=== MASTER RESUME (LaTeX) ===
+{0}
+
+=== TARGET JOB DESCRIPTION ===
+{1}
+"""
+#<

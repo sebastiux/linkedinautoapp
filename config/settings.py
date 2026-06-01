@@ -53,6 +53,13 @@ stop_date_cycle_at_24hr = True      # True or False, Note: True or False are cas
 # Give the path to the folder where all the generated resumes are to be stored
 generated_resume_path = "all resumes/" # (In Development)
 
+# Generate a tailored resume for EACH job from your master LaTeX template using AI, and upload it.
+# Requires: use_AI = True (in secrets.py) AND a LaTeX engine installed (MiKTeX on Windows -> 'xelatex').
+generate_custom_resume = True       # True or False, Note: True or False are case-sensitive
+
+# Path to your master LaTeX resume template (the base the AI tailors per job).
+master_resume_path = "all resumes/templates/master_resume.tex"
+
 
 
 

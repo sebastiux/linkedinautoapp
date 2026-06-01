@@ -46,6 +46,7 @@ from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
 from modules.validator import validate_config
+from modules.latex_resume import load_master_resume, extract_latex, compile_resume
 
 if use_AI:
     # Import each provider independently so a missing optional package (e.g.
@@ -64,11 +65,11 @@ if use_AI:
     except Exception as ai_import_error:
         print(f"Gemini provider unavailable (install google-generativeai to use it): {ai_import_error}")
     try:
-        from modules.ai.claudeConnections import claude_create_client, claude_extract_skills, claude_answer_question, claude_close_client
+        from modules.ai.claudeConnections import claude_create_client, claude_extract_skills, claude_answer_question, claude_close_client, claude_generate_resume
     except Exception as ai_import_error:
         print(f"Claude provider unavailable (install anthropic to use it): {ai_import_error}")
     try:
-        from modules.ai.grokConnections import grok_create_client, grok_extract_skills, grok_answer_question
+        from modules.ai.grokConnections import grok_create_client, grok_extract_skills, grok_answer_question, grok_generate_resume
     except Exception as ai_import_error:
         print(f"Grok provider unavailable: {ai_import_error}")
 
@@ -92,6 +93,7 @@ last_name = last_name.strip()
 full_name = first_name + " " + middle_name + " " + last_name if middle_name else first_name + " " + last_name
 
 useNewResume = True
+master_resume_template = None      # Loaded from master_resume_path when generate_custom_resume is on
 randomly_answered_questions = set()
 
 tabs_count = 1
@@ -1050,6 +1052,26 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         ##<
 
                     uploaded = False
+                    # Generate a tailored resume for this job (falls back to default on any issue)
+                    resume_to_upload = default_resume_path
+                    if generate_custom_resume and use_AI and aiClient and master_resume_template and description and description != "Unknown":
+                        try:
+                            tailored = None
+                            if ai_provider.lower() in ("claude", "anthropic"):
+                                tailored = claude_generate_resume(aiClient, description, master_resume_template)
+                            elif ai_provider.lower() in ("grok", "xai"):
+                                tailored = grok_generate_resume(aiClient, description, master_resume_template)
+                            else:
+                                print_lg(f"Custom resume generation is not wired for provider '{ai_provider}' yet; using default resume.")
+                            latex_src = extract_latex(tailored) if tailored else None
+                            if latex_src:
+                                custom_pdf = compile_resume(latex_src, generated_resume_path, str(job_id))
+                                if custom_pdf:
+                                    resume_to_upload = custom_pdf
+                                    print_lg(f"Using tailored resume: {custom_pdf}")
+                        except Exception as e:
+                            print_lg("Custom resume generation failed; using the default resume.", e)
+
                     # Case 1: Easy Apply Button
                     # First try the classic button with "Easy" in aria-label
                     is_easy_apply = try_xp(driver, ".//button[contains(@class,'jobs-apply-button') and contains(@class, 'artdeco-button--3') and contains(@aria-label, 'Easy')]")
@@ -1114,7 +1136,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         errored = "stuck"
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
-                                    if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
+                                    if (useNewResume or generate_custom_resume) and not uploaded: uploaded, resume = upload_resume(modal, resume_to_upload)
                                     try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review" or normalize-space(.)="Revisar"]')
                                     except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next") or contains(span, "Siguiente")]')
                                     try: next_button.click()
@@ -1164,7 +1186,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                         if skip: continue
 
                     submitted_jobs(job_id, title, company, work_location, work_style, description, experience_required, skills, hr_name, hr_link, resume, reposted, date_listed, date_applied, job_link, application_link, questions_list, connect_request)
-                    if uploaded:   useNewResume = False
+                    if uploaded and not generate_custom_resume:   useNewResume = False
 
                     print_lg(f'Successfully saved "{title} | {company}" job. Job ID: {job_id} info')
                     current_count += 1
@@ -1224,8 +1246,13 @@ def main() -> None:
     pyautogui.alert("Please consider sponsoring this project at:\n\nhttps://github.com/sponsors/GodsScion\n\n", "Support the project", "Okay")
     total_runs = 1
     try:
-        global linkedIn_tab, tabs_count, useNewResume, aiClient
+        global linkedIn_tab, tabs_count, useNewResume, aiClient, master_resume_template
         alert_title = "Error Occurred. Closing Browser!"
+        # Load the master LaTeX resume template if per-job custom resumes are enabled
+        if generate_custom_resume and use_AI:
+            master_resume_template = load_master_resume(master_resume_path)
+            if not master_resume_template:
+                print_lg("Custom resume generation is ON but the master template is missing - will use the default resume.")
         # Validate config, but don't let a single bad field abort the whole run.
         # Warn the user and let them choose to continue (e.g. to log in and test
         # the flow) or stop and fix it.

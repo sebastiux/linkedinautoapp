@@ -223,3 +223,20 @@ def claude_close_client(client: "Anthropic") -> None:
             client.close()
     except Exception:
         pass
+
+
+def claude_generate_resume(client: "Anthropic", job_description: str, master_resume_latex: str) -> str | None:
+    '''
+    Asks Claude to tailor `master_resume_latex` to `job_description`.
+    Returns the tailored LaTeX source, or None on failure.
+    '''
+    try:
+        print_lg("Generating a tailored resume with Claude...")
+        prompt = resume_generation_prompt.format(master_resume_latex, job_description)
+        messages = [{"role": "user", "content": prompt}]
+        system = "You are an expert resume writer and LaTeX engineer. Output ONLY valid LaTeX (no markdown fences, no commentary)."
+        result = claude_completion(client, messages, system=system, temperature=0.2, stream=False)
+        return result if isinstance(result, str) else None
+    except Exception as e:
+        critical_error_log("Error generating tailored resume with Claude!", e)
+        return None
