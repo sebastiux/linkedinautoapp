@@ -24,6 +24,36 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 
+
+# Maps the English LinkedIn UI text the bot searches for to equivalents in other
+# languages, so selectors keep working regardless of the account display language.
+UI_TRANSLATIONS = {
+    "Next": ["Next", "Siguiente"],
+    "Review": ["Review", "Revisar"],
+    "Submit application": ["Submit application", "Enviar solicitud"],
+    "Submit": ["Submit", "Enviar"],
+    "Discard": ["Discard", "Descartar"],
+    "Done": ["Done", "Listo", "Hecho"],
+    "Easy Apply": ["Easy Apply", "Solicitud sencilla"],
+    "All filters": ["All filters", "Todos los filtros"],
+    "Show results": ["Show results", "Mostrar resultados"],
+    "Continue applying": ["Continue applying", "Continuar solicitud", "Seguir solicitando"],
+    "Continue": ["Continue", "Continuar"],
+    "Save": ["Save", "Guardar"],
+}
+
+
+def text_variants(text: str) -> list[str]:
+    '''Returns `text` plus its known translations (e.g. Spanish), for selectors.'''
+    return UI_TRANSLATIONS.get(text, [text])
+
+
+def span_text_xpath(text: str) -> str:
+    '''Builds an xpath matching a <span> whose text is `text` or any translation.'''
+    conditions = ' or '.join('normalize-space(.)="{}"'.format(t) for t in text_variants(text))
+    return './/span[{}]'.format(conditions)
+
+
 # Click Functions
 def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=True, scroll: bool=True, scrollTop: bool=False) -> WebElement | bool:
     '''
@@ -36,7 +66,7 @@ def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=T
     '''
     if text:
         try:
-            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, './/span[normalize-space(.)="'+text+'"]')))
+            button = WebDriverWait(driver,time).until(EC.presence_of_element_located((By.XPATH, span_text_xpath(text))))
             if scroll:  scroll_to_view(driver, button, scrollTop)
             if click:
                 button.click()
@@ -87,7 +117,8 @@ def boolean_button_click(driver: WebDriver, actions: ActionChains, text: str) ->
     Tries to click on the boolean button with the given `text` text.
     '''
     try:
-        list_container = driver.find_element(By.XPATH, './/h3[normalize-space()="'+text+'"]/ancestor::fieldset')
+        h3_conditions = ' or '.join('normalize-space()="{}"'.format(t) for t in text_variants(text))
+        list_container = driver.find_element(By.XPATH, './/h3[{}]/ancestor::fieldset'.format(h3_conditions))
         button = list_container.find_element(By.XPATH, './/input[@role="switch"]')
         scroll_to_view(driver, button)
         actions.move_to_element(button).click().perform()

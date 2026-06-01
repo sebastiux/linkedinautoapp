@@ -209,7 +209,7 @@ def set_search_location() -> None:
     if search_location.strip():
         try:
             print_lg(f'Setting search location as: "{search_location.strip()}"')
-            search_location_ele = try_xp(driver, ".//input[@aria-label='City, state, or zip code'and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
+            search_location_ele = try_xp(driver, ".//input[(@aria-label='City, state, or zip code' or @aria-label='Ciudad, estado o código postal') and not(@disabled)]", False) #  and not(@aria-hidden='true')]")
             text_input(actions, search_location_ele, search_location, "Search Location")
         except ElementNotInteractableException:
             try_xp(driver, ".//label[@class='jobs-search-box__input-icon jobs-search-box__keywords-label']")
@@ -233,7 +233,7 @@ def apply_filters() -> None:
     try:
         recommended_wait = 1 if click_gap < 1 else 0
 
-        wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space()="All filters"]'))).click()
+        wait.until(EC.presence_of_element_located((By.XPATH, '//button[normalize-space()="All filters" or normalize-space()="Todos los filtros"]'))).click()
         buffer(recommended_wait)
 
         wait_span_click(driver, sort_by)
@@ -269,7 +269,7 @@ def apply_filters() -> None:
         multi_sel_noWait(driver, commitments)
         if benefits or commitments: buffer(recommended_wait)
 
-        show_results_button: WebElement = driver.find_element(By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show")]')
+        show_results_button: WebElement = driver.find_element(By.XPATH, '//button[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "apply current filters to show") or contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "aplicar los filtros actuales para mostrar") or contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "mostrar resultados")]')
         show_results_button.click()
 
         global pause_after_filters
@@ -1115,8 +1115,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                         raise Exception("Seems like stuck in a continuous loop of next, probably because of new questions.")
                                     questions_list = answer_questions(modal, questions_list, work_location, job_description=description)
                                     if useNewResume and not uploaded: uploaded, resume = upload_resume(modal, default_resume_path)
-                                    try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review"]') 
-                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next")]')
+                                    try: next_button = modal.find_element(By.XPATH, './/span[normalize-space(.)="Review" or normalize-space(.)="Revisar"]')
+                                    except NoSuchElementException:  next_button = modal.find_element(By.XPATH, './/button[contains(span, "Next") or contains(span, "Siguiente")]')
                                     try: next_button.click()
                                     except ElementClickInterceptedException: break    # Happens when it tries to click Next button in About Company photos section
                                     buffer(click_gap)
