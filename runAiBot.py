@@ -53,6 +53,8 @@ try: generate_custom_resume
 except NameError: generate_custom_resume = False
 try: master_resume_path
 except NameError: master_resume_path = "all resumes/templates/master_resume.tex"
+try: latex_compiler
+except NameError: latex_compiler = "auto"
 
 if use_AI:
     # Import each provider independently so a missing optional package (e.g.
@@ -1071,7 +1073,7 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                                 print_lg(f"Custom resume generation is not wired for provider '{ai_provider}' yet; using default resume.")
                             latex_src = extract_latex(tailored) if tailored else None
                             if latex_src:
-                                custom_pdf = compile_resume(latex_src, generated_resume_path, str(job_id))
+                                custom_pdf = compile_resume(latex_src, generated_resume_path, str(job_id), mode=latex_compiler)
                                 if custom_pdf:
                                     resume_to_upload = custom_pdf
                                     print_lg(f"Using tailored resume: {custom_pdf}")
