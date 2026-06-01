@@ -241,7 +241,7 @@ SCHEMA = [
           help="Leave default to log in manually each run"),
         F("password", "LinkedIn password", "str"),
         F("use_AI", "Use AI features", "bool"),
-        F("ai_provider", "AI provider", "choice", ["openai", "deepseek", "gemini"]),
+        F("ai_provider", "AI provider", "choice", ["claude", "openai", "deepseek", "gemini", "anthropic"]),
         F("llm_api_url", "LLM API URL", "str"),
         F("llm_api_key", "LLM API key", "str"),
         F("llm_model", "LLM model", "str"),

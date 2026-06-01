@@ -25,7 +25,7 @@ password = "example_password"           # Enter your password in the quotes
 
 ## Artificial Intelligence (Beta Not-Recommended)
 # Use AI
-use_AI = False                          # True or False, Note: True or False are case-sensitive
+use_AI = True                           # True or False, Note: True or False are case-sensitive
 '''
 Note: Set it as True only if you want to use AI, and If you either have a
 1. Local LLM model running on your local machine, with it's APIs exposed. Example softwares to achieve it are:
@@ -40,32 +40,33 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 ##> ------ Yang Li : MARKYangL - Feature ------
 ##> ------ Tim L : tulxoro - Refactor ------
 # Select AI Provider
-ai_provider = "openai"               # "openai", "deepseek", "gemini"
+ai_provider = "claude"               # "openai", "deepseek", "gemini", "claude"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
 * "deepseek" - DeepSeek API (DeepSeek models)
 * "gemini" - Google Gemini API (Gemini models)
+* "claude" - Anthropic Claude API (Claude models). Requires `pip install anthropic`. Get a key at https://console.anthropic.com/
 * For any other models, keep it as "openai" if it is compatible with OpenAI's api.
 '''
 
 
 
 # Your LLM url or other AI api url and port
-llm_api_url = "https://api.openai.com/v1/"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "http://localhost:1234/v1/", "https://api.deepseek.com", "https://api.deepseek.com/v1"
+llm_api_url = "https://api.anthropic.com"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "https://api.deepseek.com", "https://api.anthropic.com"
 '''
-Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini.
+Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini or Claude (the default Anthropic endpoint is used automatically).
 '''
 
 # Your LLM API key or other AI API key 
-llm_api_key = "not-needed"              # Enter your API key in the quotes, make sure it's valid, if not will result in error.
+llm_api_key = "sk-ant-REPLACE_WITH_YOUR_ANTHROPIC_API_KEY"              # Enter your Anthropic API key (starts with "sk-ant-"). Get one at https://console.anthropic.com/
 '''
 Note: Leave it empty as "" or "not-needed" if not needed. Else will result in error!
 If you are using ollama, you MUST put "not-needed".
 '''
 
 # Your LLM model name or other AI model name
-llm_model = "gpt-5-mini"          # Examples: "gpt-3.5-turbo", "gpt-4o", "llama-3.2-3b-instruct", "qwen3:latest", "gemini-pro", "gemini-1.5-flash", "gemini-2.5-flash", "deepseek-llm:latest"
+llm_model = "claude-sonnet-4-5"          # Examples: "claude-opus-4-1", "claude-sonnet-4-5", "claude-haiku-4-5", "gpt-4o", "gemini-2.5-flash", "deepseek-chat"
 
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
