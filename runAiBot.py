@@ -48,6 +48,12 @@ from modules.clickers_and_finders import *
 from modules.validator import validate_config
 from modules.latex_resume import load_master_resume, extract_latex, compile_resume
 
+# Backwards-compatible defaults in case an older config/settings.py is missing these
+try: generate_custom_resume
+except NameError: generate_custom_resume = False
+try: master_resume_path
+except NameError: master_resume_path = "all resumes/templates/master_resume.tex"
+
 if use_AI:
     # Import each provider independently so a missing optional package (e.g.
     # google-generativeai for Gemini, anthropic for Claude) only disables that
