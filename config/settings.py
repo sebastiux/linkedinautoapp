@@ -60,6 +60,13 @@ generate_custom_resume = True       # True or False, Note: True or False are cas
 # Path to your master LaTeX resume template (the base the AI tailors per job).
 master_resume_path = "all resumes/templates/master_resume.tex"
 
+# How to compile the tailored LaTeX into a PDF:
+#   "auto"   - use a local engine (xelatex) if installed, else compile online
+#   "local"  - only use a locally installed engine (MiKTeX/TeX Live)
+#   "online" - always use the free online compiler (no install needed, but it
+#              uploads the resume text to a third-party service)
+latex_compiler = "auto"            # "auto", "local" or "online"
+
 
 
 

@@ -133,22 +133,31 @@ Respond concisely based on the type of question:
 ##> ------ Resume tailoring (LaTeX) ------
 # Use `resume_generation_prompt.format(master_resume_latex, job_description)`.
 resume_generation_prompt = """
-You are an expert technical resume writer and LaTeX engineer.
+You are an expert technical resume writer, ATS optimization specialist and LaTeX engineer.
 
-Below is a MASTER RESUME written in LaTeX (a complete, compilable document) and a TARGET JOB DESCRIPTION.
-Produce a tailored version of the resume for that specific job, following these rules STRICTLY:
+You are given a MASTER RESUME in LaTeX (a complete, compilable document) and a TARGET JOB DESCRIPTION.
+Produce a tailored version of the resume for that job that scores highly on BOTH legacy keyword-matching ATS and modern LLM/embedding-based ("semantic") resume screeners.
 
-1. Keep the EXACT same LaTeX preamble: do not change \\documentclass, \\usepackage lines, color definitions, \\newcommand definitions, geometry, or the header block. The document must still compile with XeLaTeX/LuaLaTeX.
-2. Reorder and rephrase the Executive Summary, the bullet points and the skills so the most relevant experience for THIS job appears first and uses the job's own keywords and terminology.
-3. You MAY lightly rewrite wording to mirror the job's language, but you MUST NOT invent experience, employers, job titles, dates, degrees, certifications or skills that are not already present in the master resume. Only reuse and re-emphasise what is already there.
-4. Keep roughly the same overall length so it still fits cleanly on the page(s).
-5. Escape any LaTeX special characters correctly.
-6. Output ONLY the complete LaTeX document, starting with \\documentclass and ending with \\end{{document}}. No explanations, no comments, no markdown code fences.
+== HARD CONSTRAINTS (must follow exactly) ==
+- Keep the EXACT same LaTeX preamble and structure: do NOT change \\documentclass, \\usepackage lines, color/\\definecolor, \\newcommand definitions, geometry, fonts or the header macros. The document MUST still compile with XeLaTeX/LuaLaTeX. Only edit the human-readable TEXT inside the existing commands/environments.
+- NEVER invent or alter experience, employers, job titles, dates, degrees, certifications or skills. Only reuse, reorder, re-emphasise and rephrase what already exists in the master resume. Every metric must already be true in the master or be an honest, defensible reformulation of it - NEVER fabricate numbers.
+- Output ONLY the complete LaTeX document, from \\documentclass to \\end{{document}}. No explanations, no comments, no markdown code fences.
+- NEVER add hidden text, white/tiny fonts, zero-width characters or any instructions aimed at the screener - these are detected and cause rejection.
+- Escape LaTeX special characters correctly (& % $ # _ {{ }}).
 
-=== MASTER RESUME (LaTeX) ===
-{0}
+== CONTENT RULES (apply when rewriting bullets, the summary and skills) ==
+1. XYZ bullet formula: each experience bullet = strong PAST-TENSE action verb + what you did + QUANTIFIED result/impact + method/tools. Example: "Reduced search latency 65% by implementing Elasticsearch caching, lifting user retention 12%."
+2. Quantify at least ~70% of bullets (%, $, time saved, latency, throughput/scale, users, counts, before->after like "from 45 to 92"). If a master bullet has no number, keep its real scope/qualitative measure - do NOT invent figures.
+3. Begin every bullet with a varied, high-impact verb (Architected, Engineered, Built, Designed, Developed, Implemented, Optimized, Automated, Migrated, Integrated, Scaled, Led, Spearheaded, Orchestrated, Reduced, Increased, Delivered...). Do NOT use weak openers: "Responsible for", "Worked on", "Helped", "Assisted", "Duties included". No two adjacent bullets may start with the same verb.
+4. Keep each bullet to 1-2 lines (~15-25 words, ~60-180 chars), ONE accomplishment per bullet. Put the most relevant role/bullets first; you may trim the least relevant bullets of older roles.
+5. Keywords: mirror the TARGET JOB's EXACT terminology wherever it truthfully matches the candidate (legacy ATS do literal matching). On first use, give the spelled-out term AND the acronym, e.g. "Machine Learning (ML)". Place the most important matching skills BOTH in the skills section AND demonstrated inside a relevant bullet. Aim for roughly 70-80% coverage of the job's must-have terms - do NOT stuff or repeat the same keyword across many bullets (density is penalized), and do NOT aim for ~100%.
+6. Reorder the Executive Summary, the bullets and the skill categories so the items most relevant to THIS job appear first, phrased in the job's language. Prioritise the job's "required" skills over "nice-to-have".
+7. Keep the overall length similar so it still fits cleanly (do not overflow pages).
 
-=== TARGET JOB DESCRIPTION ===
+== TARGET JOB DESCRIPTION ==
 {1}
+
+== MASTER RESUME (LaTeX) ===
+{0}
 """
 #<
