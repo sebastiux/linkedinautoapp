@@ -51,7 +51,7 @@ stop_date_cycle_at_24hr = True      # True or False, Note: True or False are cas
 # >>>>>>>>>>> RESUME GENERATOR (Experimental & In Development) <<<<<<<<<<<
 
 # Give the path to the folder where all the generated resumes are to be stored
-generated_resume_path = "all resumes/" # (In Development)
+generated_resume_path = "C:/Users/Carlos/Documents/generatedcvs/" # (In Development)
 
 # Generate a tailored resume for EACH job from your master LaTeX template using AI, and upload it.
 # Requires: use_AI = True (in secrets.py) AND a LaTeX engine installed (MiKTeX on Windows -> 'xelatex').
@@ -69,7 +69,7 @@ master_resume_path = "all resumes/templates/master_resume.tex"
 # Directory and name of the files where history of applied jobs is saved (Sentence after the last "/" will be considered as the file name).
 file_name = "all excels/all_applied_applications_history.csv"
 failed_file_name = "all excels/all_failed_applications_history.csv"
-logs_folder_path = "logs/"
+logs_folder_path = "C:/Users/Carlos/Documents/generatedcvs/"
 
 # Set the maximum amount of time allowed to wait between each click in secs
 click_gap = 1                       # Enter max allowed secs to wait approximately. (Only Non Negative Integers Eg: 0,1,2,3,....)
