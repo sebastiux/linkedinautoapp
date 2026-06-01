@@ -924,7 +924,13 @@ def apply_to_jobs(search_terms: list[str]) -> None:
 
             
                 for job in job_listings:
-                    if keep_screen_awake: pyautogui.press('shiftright')
+                    if keep_screen_awake:
+                        try:
+                            pyautogui.press('shiftright')
+                        except Exception:
+                            # pyautogui's ctypes keyboard call can fail on some
+                            # Python builds (e.g. 3.14). Don't let it crash the run.
+                            pass
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
 
@@ -1219,11 +1225,11 @@ def main() -> None:
             validate_config()
         except Exception as ve:
             print_lg(f"Configuration issue: {ve}")
-            choice = pyautogui.confirm(
+            config_decision = pyautogui.confirm(
                 f"A configuration value needs attention:\n\n{ve}\n\n"
                 "You can fix it later in the GUI. Continue the run anyway?",
                 "Configuration Warning", ["Continue anyway", "Stop and fix"])
-            if choice != "Continue anyway":
+            if config_decision != "Continue anyway":
                 raise
         
         if not os.path.exists(default_resume_path):
