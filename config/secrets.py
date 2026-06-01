@@ -40,20 +40,21 @@ CHECK THE OPENAI API PIRCES AT THEIR WEBSITE (https://openai.com/api/pricing/).
 ##> ------ Yang Li : MARKYangL - Feature ------
 ##> ------ Tim L : tulxoro - Refactor ------
 # Select AI Provider
-ai_provider = "claude"               # "openai", "deepseek", "gemini", "claude"
+ai_provider = "claude"               # "openai", "deepseek", "gemini", "claude", "grok"
 '''
 Note: Select your AI provider.
 * "openai" - OpenAI API (GPT models) OR OpenAi-compatible APIs (like Ollama)
 * "deepseek" - DeepSeek API (DeepSeek models)
 * "gemini" - Google Gemini API (Gemini models)
 * "claude" - Anthropic Claude API (Claude models). Requires `pip install anthropic`. Get a key at https://console.anthropic.com/
+* "grok" - xAI Grok API (Grok models). OpenAI-compatible. Set `llm_api_url = "https://api.x.ai/v1"`. Get a key at https://console.x.ai/
 * For any other models, keep it as "openai" if it is compatible with OpenAI's api.
 '''
 
 
 
 # Your LLM url or other AI api url and port
-llm_api_url = "https://api.anthropic.com"       # Examples: "https://api.openai.com/v1/", "http://127.0.0.1:1234/v1/", "https://api.deepseek.com", "https://api.anthropic.com"
+llm_api_url = "https://api.anthropic.com"       # Examples: "https://api.openai.com/v1/", "https://api.deepseek.com", "https://api.anthropic.com", "https://api.x.ai/v1" (Grok)
 '''
 Note: Don't forget to add / at the end of your url. You may not need this if you are using Gemini or Claude (the default Anthropic endpoint is used automatically).
 '''
@@ -66,7 +67,7 @@ If you are using ollama, you MUST put "not-needed".
 '''
 
 # Your LLM model name or other AI model name
-llm_model = "claude-sonnet-4-5"          # Examples: "claude-opus-4-1", "claude-sonnet-4-5", "claude-haiku-4-5", "gpt-4o", "gemini-2.5-flash", "deepseek-chat"
+llm_model = "claude-sonnet-4-5"          # Examples: "claude-sonnet-4-5", "claude-haiku-4-5", "gpt-4o", "gemini-2.5-flash", "deepseek-chat", "grok-4", "grok-3-mini"
 
 llm_spec = "openai"                # Examples: "openai", "openai-like", "openai-like-github", "openai-like-mistral"
 '''
