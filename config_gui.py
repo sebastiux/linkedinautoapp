@@ -424,6 +424,14 @@ class ConfigApp(tk.Tk):
             elif f["var"] == "default_resume_path":
                 ttk.Button(entry_row, text="Browse", width=8,
                            command=lambda v=var: self._browse_resume(v)).grid(row=0, column=1, padx=(4, 0))
+            elif f["var"] == "master_resume_path":
+                ttk.Button(entry_row, text="Browse", width=8,
+                           command=lambda v=var: self._browse_file(
+                               v, "Select your master LaTeX resume",
+                               [("LaTeX", "*.tex"), ("All files", "*.*")])).grid(row=0, column=1, padx=(4, 0))
+            elif f["var"] in ("generated_resume_path", "logs_folder_path"):
+                ttk.Button(entry_row, text="Browse", width=8,
+                           command=lambda v=var: self._browse_folder(v)).grid(row=0, column=1, padx=(4, 0))
 
             getter, setter = var.get, var.set
 
@@ -467,6 +475,19 @@ class ConfigApp(tk.Tk):
             filetypes=[("PDF / Documents", "*.pdf *.doc *.docx"), ("All files", "*.*")])
         if path:
             var.set(path)
+
+    def _browse_file(self, var, title, filetypes):
+        path = filedialog.askopenfilename(title=title, filetypes=filetypes)
+        if path:
+            var.set(path)
+
+    def _browse_folder(self, var):
+        initial = var.get().strip() or os.getcwd()
+        path = filedialog.askdirectory(title="Select a folder", mustexist=False,
+                                       initialdir=initial if os.path.isdir(initial) else os.getcwd())
+        if path:
+            # Keep a trailing slash so the bot treats it as a folder
+            var.set(path if path.endswith(("/", "\\")) else path + "/")
 
     def _log_write(self, text):
         self.log.configure(state="normal")
