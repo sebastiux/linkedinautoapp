@@ -86,24 +86,38 @@ def claude_completion(client: "Anthropic", messages: list[dict], system: str = N
     if system:
         params["system"] = system
 
+    def _run(p: dict) -> str:
+        out = ""
+        if stream:
+            print_lg("--STREAMING STARTED")
+            with client.messages.stream(**p) as stream_resp:
+                for text in stream_resp.text_stream:
+                    out += text
+                    print_lg(text, end="", flush=True)
+            print_lg("\n--STREAMING COMPLETE")
+        else:
+            completion = client.messages.create(**p)
+            out = "".join(
+                block.text for block in completion.content if getattr(block, "type", None) == "text"
+            )
+        return out
+
     try:
         print_lg("Calling Claude API for completion...")
         print_lg(f"Using model: {llm_model}")
         print_lg(f"Message count: {len(messages)}")
-        result = ""
 
-        if stream:
-            print_lg("--STREAMING STARTED")
-            with client.messages.stream(**params) as stream_resp:
-                for text in stream_resp.text_stream:
-                    result += text
-                    print_lg(text, end="", flush=True)
-            print_lg("\n--STREAMING COMPLETE")
-        else:
-            completion = client.messages.create(**params)
-            result = "".join(
-                block.text for block in completion.content if getattr(block, "type", None) == "text"
-            )
+        try:
+            result = _run(params)
+        except Exception as inner:
+            # Some newer models (e.g. claude-opus-4-8) no longer accept the
+            # `temperature` parameter. Drop it and retry once.
+            if "temperature" in str(inner).lower():
+                print_lg("This model doesn't accept 'temperature'; retrying without it...")
+                params.pop("temperature", None)
+                result = _run(params)
+            else:
+                raise
 
         if expecting_json:
             result = convert_to_json(result)
