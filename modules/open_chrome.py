@@ -60,58 +60,87 @@ def createChromeSession(isRetry: bool = False, version_main: int = None):
     return options, driver, actions, wait
 
 
-def _detect_installed_chrome_major(error_text: object) -> int | None:
+def _chrome_major_from_error(error_text: object) -> int | None:
     '''
-    Tries to figure out the installed Chrome major version so we can download a
-    matching ChromeDriver. First it parses the version mentioned in a Selenium
-    error message (e.g. "Current browser version is 148.0.7778.179"); if that
-    fails it falls back to querying the system.
+    Parses the installed Chrome major version from a Selenium error message
+    (e.g. "Current browser version is 148.0.7778.179"). Returns None if absent.
     '''
     import re
     match = re.search(r"Current browser version is (\d+)", str(error_text))
-    if match:
-        return int(match.group(1))
+    return int(match.group(1)) if match else None
+
+
+def _detect_installed_chrome_major() -> int | None:
+    '''
+    Detects the installed Chrome major version directly from the system, so we
+    can download a matching ChromeDriver. Tries the Windows registry first (the
+    most reliable source), then reads the Chrome executable's file version.
+    Returns None if it cannot be determined.
+    '''
+    import re, sys, subprocess
+
+    # 1. Windows registry (BLBeacon holds the exact installed version)
+    if sys.platform.startswith("win"):
+        try:
+            import winreg
+            for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                try:
+                    with winreg.OpenKey(hive, r"Software\Google\Chrome\BLBeacon") as key:
+                        version, _ = winreg.QueryValueEx(key, "version")
+                        if version:
+                            return int(str(version).split(".")[0])
+                except FileNotFoundError:
+                    continue
+        except Exception:
+            pass
+
+    # 2. Read the version straight off the Chrome executable
     try:
         from undetected_chromedriver import find_chrome_executable
-        from undetected_chromedriver.patcher import Patcher  # noqa: F401
-        import subprocess, sys
         chrome_path = find_chrome_executable()
-        if not chrome_path:
-            return None
-        if sys.platform.startswith("win"):
-            # Read the product version via PowerShell (no extra dependencies)
-            out = subprocess.check_output(
-                ["powershell", "-NoProfile", "-Command",
-                 f"(Get-Item '{chrome_path}').VersionInfo.ProductVersion"],
-                text=True, stderr=subprocess.DEVNULL,
-            ).strip()
-        else:
-            out = subprocess.check_output([chrome_path, "--version"], text=True).strip()
-        ver = re.search(r"(\d+)\.", out)
-        return int(ver.group(1)) if ver else None
+        if chrome_path:
+            if sys.platform.startswith("win"):
+                out = subprocess.check_output(
+                    ["powershell", "-NoProfile", "-Command",
+                     f"(Get-Item '{chrome_path}').VersionInfo.ProductVersion"],
+                    text=True, stderr=subprocess.DEVNULL,
+                ).strip()
+            else:
+                out = subprocess.check_output([chrome_path, "--version"], text=True).strip()
+            ver = re.search(r"(\d+)\.", out)
+            if ver:
+                return int(ver.group(1))
     except Exception:
-        return None
+        pass
+
+    return None
+
+
+def _open_with_matching_driver():
+    '''
+    Opens Chrome, automatically matching the ChromeDriver to the installed
+    Chrome version. undetected_chromedriver's own auto-detection is unreliable
+    on some setups (it may grab a newer driver than the installed Chrome), so we
+    detect the version ourselves and pass it explicitly, retrying as needed.
+    '''
+    # Detect the installed Chrome version up-front and pass it explicitly.
+    chrome_major = _detect_installed_chrome_major()
+    try:
+        if chrome_major:
+            print_lg(f"Detected installed Chrome version: {chrome_major}. Downloading a matching ChromeDriver...")
+        return createChromeSession(version_main=chrome_major)
+    except SessionNotCreatedException as e:
+        # If it still mismatched, the error now tells us the real Chrome version.
+        detected = _chrome_major_from_error(e) or chrome_major
+        critical_error_log("Chrome session failed, retrying with a matching driver and a guest profile", e)
+        return createChromeSession(True, version_main=detected)
 
 
 try:
     options, driver, actions, wait = None, None, None, None
-    options, driver, actions, wait = createChromeSession()
-except SessionNotCreatedException as e:
-    # Most common cause: the auto-downloaded ChromeDriver does not match the
-    # installed Chrome. Detect the installed Chrome version and retry with a
-    # matching driver before falling back to a guest profile.
-    chrome_major = _detect_installed_chrome_major(e)
-    try:
-        if chrome_major:
-            print_lg(f"ChromeDriver/Chrome version mismatch detected. Retrying with a driver for Chrome {chrome_major}...")
-            options, driver, actions, wait = createChromeSession(version_main=chrome_major)
-        else:
-            raise e
-    except SessionNotCreatedException as e2:
-        critical_error_log("Failed to create Chrome Session, retrying with guest profile", e2)
-        options, driver, actions, wait = createChromeSession(True, version_main=chrome_major)
+    options, driver, actions, wait = _open_with_matching_driver()
 except Exception as e:
-    msg = 'Seems like Google Chrome is out dated. Update browser and try again! \n\n\nIf issue persists, try Safe Mode. Set, safe_mode = True in config.py \n\nPlease check GitHub discussions/support for solutions https://github.com/GodsScion/Auto_job_applier_linkedIn \n                                   OR \nReach out in discord ( https://discord.gg/fFp7uUzWCY )'
+    msg = 'Could not open Chrome with the undetected (stealth) driver.\n\nMOST RELIABLE FIX: open the GUI, go to "Bot Settings" and UNCHECK "Stealth mode" (stealth_mode = False). Without stealth mode, Selenium auto-downloads the correct ChromeDriver for your Chrome version.\n\nAlternatively, update Google Chrome to the latest version and try again.\n\nFor help: https://github.com/GodsScion/Auto_job_applier_linkedIn  OR  https://discord.gg/fFp7uUzWCY'
     if isinstance(e,TimeoutError): msg = "Couldn't download Chrome-driver. Set stealth_mode = False in config!"
     print_lg(msg)
     critical_error_log("In Opening Chrome", e)
