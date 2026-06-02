@@ -104,7 +104,7 @@ def grok_completion(client: OpenAI, messages: list[dict], response_format: dict 
                 chunk_message = chunk.choices[0].delta.content
                 if chunk_message is not None:
                     result += chunk_message
-                print_lg(chunk_message, end="", flush=True)
+                    print_lg(chunk_message, end="", flush=True)
             print_lg("\n--STREAMING COMPLETE")
         else:
             if completion.model_extra and completion.model_extra.get("error"):

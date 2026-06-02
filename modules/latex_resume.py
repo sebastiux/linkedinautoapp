@@ -251,15 +251,37 @@ def find_latex_engine() -> str | None:
 def extract_latex(text: str) -> str | None:
     '''
     Pulls the LaTeX document out of an AI response (in case it wrapped it in
-    markdown fences or added stray text). Returns None if nothing usable.
+    markdown fences or added stray text) and fixes common AI mistakes that
+    break compilation (e.g. an unescaped % which starts a LaTeX comment).
+    Returns None if nothing usable.
     '''
     if not text or not isinstance(text, str):
         return None
     match = re.search(r"\\documentclass[\s\S]*?\\end\{document\}", text)
-    if match:
-        return match.group(0)
-    stripped = text.strip().strip("`")
-    return stripped if "\\documentclass" in stripped else None
+    doc = match.group(0) if match else None
+    if doc is None:
+        stripped = text.strip().strip("`")
+        doc = stripped if "\\documentclass" in stripped else None
+    if doc is None:
+        return None
+    return _fix_common_latex(doc)
+
+
+def _fix_common_latex(latex: str) -> str:
+    '''
+    Escapes stray special characters the AI sometimes leaves unescaped in text
+    (most importantly `%`, which silently comments out the rest of a line).
+    Whole-line comments are preserved.
+    '''
+    fixed_lines = []
+    for line in latex.split("\n"):
+        if line.lstrip().startswith("%"):
+            fixed_lines.append(line)          # genuine full-line comment
+            continue
+        # Escape a % that isn't already escaped (negative lookbehind for backslash)
+        line = re.sub(r"(?<!\\)%", r"\\%", line)
+        fixed_lines.append(line)
+    return "\n".join(fixed_lines)
 
 
 def load_master_resume(path: str) -> str | None:

@@ -143,7 +143,7 @@ Produce a tailored version of the resume for that job that scores highly on BOTH
 - NEVER invent or alter experience, employers, job titles, dates, degrees, certifications or skills. Only reuse, reorder, re-emphasise and rephrase what already exists in the master resume. Every metric must already be true in the master or be an honest, defensible reformulation of it - NEVER fabricate numbers.
 - Output ONLY the complete LaTeX document, from \\documentclass to \\end{{document}}. No explanations, no comments, no markdown code fences.
 - NEVER add hidden text, white/tiny fonts, zero-width characters or any instructions aimed at the screener - these are detected and cause rejection.
-- Escape LaTeX special characters correctly (& % $ # _ {{ }}).
+- Escape LaTeX special characters in all TEXT correctly. CRITICAL: write a literal percent sign as \\% (a bare % starts a LaTeX comment and BREAKS compilation - e.g. write "reduced cost by 40\\%"). Likewise use \\&, \\$, \\#, \\_ for those characters in text.
 
 == CONTENT RULES (apply when rewriting bullets, the summary and skills) ==
 1. XYZ bullet formula: each experience bullet = strong PAST-TENSE action verb + what you did + QUANTIFIED result/impact + method/tools. Example: "Reduced search latency 65% by implementing Elasticsearch caching, lifting user retention 12%."
