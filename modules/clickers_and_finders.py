@@ -193,7 +193,8 @@ def text_input(actions: ActionChains, textInputEle: WebElement | bool, value: st
         sleep(1)
         # actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
         textInputEle.clear()
-        textInputEle.send_keys(value.strip())
+        from modules.humanizer import human_type
+        human_type(textInputEle, value.strip())
         sleep(2)
         actions.send_keys(Keys.ENTER).perform()
     else:

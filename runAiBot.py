@@ -45,6 +45,7 @@ from config.settings import *
 from modules.open_chrome import *
 from modules.helpers import *
 from modules.clickers_and_finders import *
+from modules.humanizer import human_delay, between_applications_delay, human_type, random_scroll
 from modules.validator import validate_config
 from modules.latex_resume import load_master_resume, extract_latex, compile_resume
 
@@ -711,7 +712,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                         answer = years_of_experience
                 ##<
                 text.clear()
-                text.send_keys(answer)
+                human_type(text, answer)
                 if do_actions:
                     sleep(2)
                     actions.send_keys(Keys.ARROW_DOWN)
@@ -759,7 +760,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
                     else:
                         randomly_answered_questions.add((label_org, "textarea"))
             text_area.clear()
-            text_area.send_keys(answer)
+            human_type(text_area, answer)
             if do_actions:
                     sleep(2)
                     actions.send_keys(Keys.ARROW_DOWN)
@@ -951,9 +952,12 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                             pass
                     if current_count >= switch_number: break
                     print_lg("\n-@-\n")
+                    # Human-like: pause briefly and scroll as if reading the listing
+                    human_delay()
+                    random_scroll(driver)
 
                     job_id,title,company,work_location,work_style,skip = get_job_main_details(job, blacklisted_companies, rejected_jobs)
-                    
+
                     if skip: continue
                     # Redundant fail safe check for applied jobs!
                     try:
@@ -1201,6 +1205,8 @@ def apply_to_jobs(search_terms: list[str]) -> None:
                     if application_link == "Easy Applied": easy_applied_count += 1
                     else:   external_jobs_count += 1
                     applied_jobs.add(job_id)
+                    # Human-like: wait a randomized moment before the next application
+                    between_applications_delay()
 
 
 
