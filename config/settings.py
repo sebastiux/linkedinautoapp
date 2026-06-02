@@ -99,6 +99,16 @@ keep_screen_awake = True            # True or False, Note: True or False are cas
 # Run in undetected mode to bypass anti-bot protections (Preview Feature, UNSTABLE. Recommended to leave it as False)
 stealth_mode = True                # True or False, Note: True or False are case-sensitive
 
+# >>>>>>>>>>> HUMAN-LIKE BEHAVIOR (reduce automation detection) <<<<<<<<<<<
+# Randomize timing, type text character-by-character, and scroll like a human.
+# NOTE: this lowers obvious bot patterns but does NOT guarantee you won't be detected.
+# Automating LinkedIn violates its Terms; keep volume moderate and supervise the run.
+humanize_actions = True            # True or False, Note: True or False are case-sensitive
+min_action_delay = 0.6             # Min seconds for a random pause between actions
+max_action_delay = 2.5             # Max seconds for a random pause between actions
+apply_pause_min = 2.5              # Min seconds to wait between job applications
+apply_pause_max = 9.0              # Max seconds to wait between job applications
+
 # Do you want to get alerts on errors related to AI API connection?
 showAiErrorAlerts = False            # True or False, Note: True or False are case-sensitive
 

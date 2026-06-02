@@ -95,6 +95,11 @@ def read_value(content: str, var: str, multiline: bool):
         return value_str
 
 
+def _var_exists(content: str, var: str) -> bool:
+    '''True if `var = ...` is assigned at the start of a line in `content`.'''
+    return re.search(r'(?m)^[ \t]*' + re.escape(var) + r'[ \t]*=', content) is not None
+
+
 def set_value(content: str, var: str, literal: str, multiline: bool) -> str:
     '''
     Replaces the value of `var` in `content` with `literal`, keeping any inline
@@ -264,6 +269,8 @@ SCHEMA = [
         F("smooth_scroll", "Smooth scrolling", "bool"),
         F("keep_screen_awake", "Keep screen awake", "bool"),
         F("stealth_mode", "Stealth mode (undetected)", "bool"),
+        F("humanize_actions", "Human-like behavior (anti-detection)", "bool",
+          help="Randomize timing, type char-by-char, scroll like a human"),
         F("showAiErrorAlerts", "Show AI error alerts", "bool"),
         F("generate_custom_resume", "AI custom resume per job", "bool",
           help="Tailor a LaTeX resume to each job (needs use_AI + MiKTeX/xelatex installed)"),
@@ -540,7 +547,15 @@ class ConfigApp(tk.Tk):
                         continue
                     f = entry["schema"]
                     literal = to_literal(entry["get"](), f["type"])
-                    content = set_value(content, var, literal, f["multiline"])
+                    new_content = set_value(content, var, literal, f["multiline"])
+                    if new_content == content and not _var_exists(content, var):
+                        # Variable not present in the file yet -> append it so new
+                        # settings (e.g. humanize_actions) actually persist.
+                        if not content.endswith("\n"):
+                            content += "\n"
+                        content += f"{var} = {literal}\n"
+                    else:
+                        content = new_content
                 with open(path, "w", encoding="utf-8") as fh:
                     fh.write(content)
         except Exception as exc:

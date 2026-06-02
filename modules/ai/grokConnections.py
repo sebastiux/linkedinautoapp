@@ -84,7 +84,16 @@ def grok_completion(client: OpenAI, messages: list[dict], response_format: dict 
         print_lg("Calling Grok API for completion...")
         print_lg(f"Using model: {llm_model}")
         print_lg(f"Message count: {len(messages)}")
-        completion = client.chat.completions.create(**params)
+        try:
+            completion = client.chat.completions.create(**params)
+        except Exception as inner:
+            # Some xAI models (e.g. reasoning models) reject `temperature`. Drop it and retry.
+            if "temperature" in str(inner).lower():
+                print_lg("This model doesn't accept 'temperature'; retrying without it...")
+                params.pop("temperature", None)
+                completion = client.chat.completions.create(**params)
+            else:
+                raise
         result = ""
 
         if stream:
